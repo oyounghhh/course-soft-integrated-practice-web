@@ -61,9 +61,10 @@
 
             <el-main>
                 <div class="main-box">
+                    <!-- 折叠框，显示各项身体标准的体检值 -->
                     <el-collapse>
                         <el-collapse-item
-                            v-for="(ci, ciIndex) in ciReportArr"
+                            v-for="(ci, ciIndex) in ciReportArrRef"
                             :title="ci.ciName"
                             :key="ci.ciId"
                         >
@@ -104,7 +105,7 @@
                                         :placeholder="cidr.name"
                                         v-if="cidr.type != 4"
                                         v-model="
-                                            ciReportArr[ciIndex].cidrList[
+                                            ciReportArrRef[ciIndex].cidrList[
                                                 cidrIndex
                                             ].value
                                         "
@@ -118,7 +119,7 @@
                                         :rows="2"
                                         :placeholder="cidr.name"
                                         v-model="
-                                            ciReportArr[ciIndex].cidrList[
+                                            ciReportArrRef[ciIndex].cidrList[
                                                 cidrIndex
                                             ].value
                                         "
@@ -145,6 +146,7 @@
                         </el-collapse-item>
                     </el-collapse>
 
+                    <!-- 总检结论 -->
                     <el-card class="box-card" style="margin-top: 20px">
                         <template #header>
                             <div class="card-header">
@@ -293,6 +295,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { getSessionStorage } from '@/utils/common'
 
 import requestOrderUserData from '@/requests/requestOrderUserData'
+import requestCiReports from '@/requests/requestCiReports'
+import requestUpdateCiDetailReport from '@/requests/requestUpdateCiDetailReport'
 
 // 异步数据未请求完成时，不进行组件的渲染
 const isLoaded = ref(false)
@@ -319,24 +323,13 @@ const updateOverallResultForm = reactive({
     title: '总检标题',
     content: '总检内容',
 })
-const ciReportArr = [
-    {
-        ciName: 'namexxx',
-        ciId: '123',
-        cidrList: [
-            {
-                isError: 1,
-                name: '名称',
-                type: 1,
-            },
-        ],
-    },
-]
+const ciReportArrRef = ref([])
 const isDialogVisibleRef = ref(false)
 
 // ------------------ life cycle ------------------
 onBeforeMount(async () => {
     await getOrdersUserData()
+    await getUserCiReports()
     isLoaded.value = true
 })
 
@@ -344,6 +337,14 @@ onBeforeMount(async () => {
 async function getOrdersUserData() {
     try {
         orders.value = await requestOrderUserData(orderId)
+    } catch (error) {
+        alert(err.message)
+    }
+}
+
+async function getUserCiReports() {
+    try {
+        ciReportArrRef.value = await requestCiReports(orderId)
     } catch (error) {
         alert(err.message)
     }
@@ -362,13 +363,52 @@ function queryOrderUserData() {
         },
     })
 }
+
+function updateCiDetailedReport(ciIndex) {
+    //表单验证（1：非空；2：当type==1时验证是否为数字）
+    let cidrArr = ciReportArrRef.value[ciIndex].cidrList
+    for (let i = 0; i < cidrArr.length; i++) {
+        if (cidrArr[i].value == '') {
+            alert(cidrArr[i].name + '不能为空！')
+            return
+        }
+        if (
+            cidrArr[i].type == 1 &&
+            parseFloat(cidrArr[i].value).toString() == 'NaN'
+        ) {
+            alert(cidrArr[i].name + '必须为数字！')
+            return
+        }
+    }
+
+    //封装提交参数（压缩提交参数）
+    let arr = []
+    for (let i = 0; i < cidrArr.length; i++) {
+        arr.push({
+            cidrId: cidrArr[i].cidrId,
+            value: cidrArr[i].value,
+            isError: cidrArr[i].isError,
+        })
+    }
+    requestUpdateCiDetailReport(arr)
+        .then((data) => {
+            if (data > 0) {
+                alert('保存成功！')
+                getUserCiReports()
+            } else {
+                alert('保存失败！')
+            }
+        })
+        .catch((err) => {
+            alert(err.message)
+        })
+}
 function updateOrdersState() {}
 function addOverallResult() {}
 function resetOverallResult() {}
 function updateOverallResult() {}
 function toUpdateOverallResult() {}
 function removeOverallResult() {}
-function updateCiDetailedReport() {}
 
 // ------------------ element-plus events ------------------
 function cidrCheckByBlur() {}
