@@ -297,6 +297,7 @@ import { getSessionStorage } from '@/utils/common'
 import requestOrderUserData from '@/requests/requestOrderUserData'
 import requestCiReports from '@/requests/requestCiReports'
 import requestUpdateCiDetailReport from '@/requests/requestUpdateCiDetailReport'
+import requestUpdateCiReportResult from '@/requests/requestUpdateCiReportResult'
 
 // 异步数据未请求完成时，不进行组件的渲染
 const isLoaded = ref(false)
@@ -407,7 +408,28 @@ function updateCiDetailedReport(ciIndex) {
             alert(err.message)
         })
 }
-function updateOrdersState() {}
+
+/**
+ * 将总检结论的内容归档
+ */
+function updateOrdersState() {
+    if (!confirm('总检结论报告归档前，请务必确认是否所有检查项数据都正确？')) {
+        return
+    }
+
+    requestUpdateCiReportResult({ orderId, state: 2 })
+        .then((data) => {
+            if (data > 0) {
+                router.push({ name: 'OrdersList' })
+            } else {
+                alert('总检结论报告归档失败！')
+            }
+        })
+        .catch((err) => {
+            alert(err.message)
+        })
+}
+
 function addOverallResult() {}
 function resetOverallResult() {}
 function updateOverallResult() {}
