@@ -489,7 +489,30 @@ function cancelUpdateOverallResult() {
     clearOverallResultInput()
 }
 // ------------------ element-plus events ------------------
-function cidrCheckByBlur() {}
+function cidrCheckByBlur(ciIndex, cidrIndex) {
+    //获取当前选中的检查项明细
+    let cidr = ciReportArrRef.value[ciIndex].cidrList[cidrIndex]
+    //判断type属性（1：数值范围验证型；2：数值相等验证型；）
+    if (cidr.type == 1) {
+        if (
+            !(cidr.value == null || cidr.value == '') &&
+            (cidr.value < cidr.minrange || cidr.value > cidr.maxrange)
+        ) {
+            cidr.isError = 1
+        } else {
+            cidr.isError = 0
+        }
+    } else if (cidr.type == 2) {
+        if (
+            !(cidr.value == null || cidr.value == '') &&
+            cidr.value != cidr.normalValue
+        ) {
+            cidr.isError = 1
+        } else {
+            cidr.isError = 0
+        }
+    }
+}
 </script>
 
 <style scoped>
