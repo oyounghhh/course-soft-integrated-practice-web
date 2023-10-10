@@ -28,8 +28,7 @@
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { setSessionStorage } from '@/utils/common'
-import axios from 'axios'
-axios.defaults.baseURL = 'http://localhost:8088/tijiancms/'
+import requestLogin from '@/requests/requestLogin'
 
 const router = useRouter()
 
@@ -38,35 +37,39 @@ const loginForm = reactive({
     password: '',
 })
 
-const login = () => {
+// ------------------ dom events ------------------
+function login() {
+    if (!validateLoginForm()) {
+        return
+    }
+
+    requestLogin(loginForm)
+        .then((data) => {
+            const doctorName = data
+            if (data !== '') {
+                setSessionStorage('doctor', { realName: doctorName })
+                router.push({ name: 'OrdersList' })
+            } else {
+                alert('不存在该医生')
+            }
+        })
+        .catch((e) => {
+            alert(e.message)
+        })
+}
+
+// ------------------ utils ------------------
+
+function validateLoginForm() {
     if (loginForm.docCode == '') {
         alert('医生编码不能为空！')
-        return
+        return false
     }
     if (loginForm.password == '') {
         alert('密码不能为空！')
-        return
+        return false
     }
-    router.push({
-        name: 'OrdersList',
-    })
-    return
-
-    axios
-        .post('doctor/getDoctorByCodeByPass', state.loginForm)
-        .then((response) => {
-            let doctor = response.data
-            if (doctor != '') {
-                setSessionStorage('doctor', doctor)
-                router.push('/ordersList')
-            } else {
-                alert('医生编码或密码不正确！')
-            }
-        })
-        .catch((error) => {
-            alert(error.message)
-            console.error(error)
-        })
+    return true
 }
 </script>
 

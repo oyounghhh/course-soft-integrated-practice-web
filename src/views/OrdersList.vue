@@ -1,38 +1,42 @@
 <template>
     <el-container style="height: 100%">
         <el-header>
-            <h1>Neusoft&nbsp;&nbsp;体检报告管理系统</h1>
-            <p>医生：{{ doctor.realName }}</p>
+            <h1>体检报告管理系统</h1>
+            <p>医生：{{ doctorName }}</p>
         </el-header>
         <el-container>
             <el-aside width="260px">
                 <h4>体检用户查询</h4>
-                <el-form ref="formRef" :model="selectForm" label-width="auto">
+                <el-form
+                    ref="formRef"
+                    :model="dataCondition"
+                    label-width="auto"
+                >
                     <el-form-item label="手机号码">
                         <el-input
-                            v-model="selectForm.userId"
+                            v-model="dataCondition.userId"
                             placeholder="手机号码"
                         ></el-input>
                     </el-form-item>
                     <el-form-item label="姓名">
                         <el-input
-                            v-model="selectForm.realName"
+                            v-model="dataCondition.realName"
                             placeholder="姓名"
                         ></el-input>
                     </el-form-item>
                     <el-form-item label="性别">
-                        <el-radio-group v-model="selectForm.sex">
+                        <el-radio-group v-model="dataCondition.sex">
                             <el-radio label="1">男</el-radio>
                             <el-radio label="0">女</el-radio>
                         </el-radio-group>
                     </el-form-item>
                     <el-form-item label="套餐类型">
                         <el-select
-                            v-model="selectForm.smId"
+                            v-model="dataCondition.smId"
                             placeholder="套餐类型"
                         >
                             <el-option
-                                v-for="setmeal in setmealArr"
+                                v-for="setmeal in setmealArrRef"
                                 :key="setmeal.smId"
                                 :label="setmeal.name"
                                 :value="setmeal.smId"
@@ -41,7 +45,7 @@
                     </el-form-item>
                     <el-form-item label="体检日期">
                         <el-date-picker
-                            v-model="selectForm.orderDate"
+                            v-model="dataCondition.orderDate"
                             type="date"
                             placeholder="体检日期"
                             style="width: 100%"
@@ -50,7 +54,7 @@
                         ></el-date-picker>
                     </el-form-item>
                     <el-form-item label="是否归档">
-                        <el-radio-group v-model="selectForm.state">
+                        <el-radio-group v-model="dataCondition.state">
                             <el-radio border label="1">未归档</el-radio>
                             <el-radio border label="2">已归档</el-radio>
                         </el-radio-group>
@@ -67,7 +71,7 @@
             </el-aside>
             <el-main>
                 <el-table
-                    :data="ordersPageResponseDto.list"
+                    :data="ordersPageResponseDtoRef?.list"
                     style="width: 100%"
                 >
                     <el-table-column
@@ -85,15 +89,7 @@
                         label="真实姓名"
                         width="120"
                     />
-                    <!-- <el-table-column label="性别" width="60">
-                        <template #default="scope">
-                            <span>{{
-                                scope.row.users.sex == 1 ? '男' : '女'
-                            }}</span>
-                        </template>
-                    </el-table-column> -->
-                    <el-table-column prop="users.sex" label="性别" width="60">
-                    </el-table-column>
+                    <el-table-column prop="users.sex" label="性别" width="60" />
                     <el-table-column prop="setmeal.name" label="套餐类型" />
                     <el-table-column
                         prop="hospital.name"
@@ -104,9 +100,8 @@
                     <el-table-column label="操作" width="120">
                         <template #default="scope">
                             <el-button
-                                type="text"
                                 size="small"
-                                @click="ciReport(scope.row)"
+                                @click="handleReport(scope.row)"
                                 >{{
                                     scope.row.state == 1
                                         ? '编辑体检报告'
@@ -117,34 +112,28 @@
                     </el-table-column>
                 </el-table>
                 <el-pagination
-                    background
-                    layout="prev, pager, next, total"
-                    :total="ordersPageResponseDto.totalRow"
-                    :page-size="ordersPageResponseDto.maxPageNum"
+                    layout="prev, pager, next"
+                    :total="1"
                     style="margin-top: 20px"
-                    @current-change="currentChange"
-                >
-                </el-pagination>
+                />
             </el-main>
         </el-container>
     </el-container>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-// import { getSessionStorage } from '@/utils/common'
-import axios from 'axios'
-axios.defaults.baseURL = 'http://localhost:8088/tijiancms/'
+import { getSessionStorage } from '@/utils/common'
+import requestReportTemplate from '@/requests/requestReportTemplate'
+import requestSetmealList from '@/requests/requestSetmealList'
+import requestOrderByPage from '@/requests/requestOrderByPage'
 
+const MAX_PAGE_NUM = 10
 const router = useRouter()
+const doctorName = getSessionStorage('doctor')?.realName
 
-// const doctor = getSessionStorage('doctor')
-const doctor = {
-    realName: '某某医生',
-}
-
-const selectForm = reactive({
+const dataCondition = reactive({
     userId: '',
     realName: '',
     sex: '',
@@ -152,81 +141,40 @@ const selectForm = reactive({
     orderDate: '',
     state: '1',
 })
-const setmealArr = reactive([])
-const ordersPageResponseDto = reactive({
-    list: [
-        {
-            orderId: '12312312',
-            userId: '123123123',
-            users: { realName: '某某某', sex: '女' },
-            setmeal: { name: '女士-xx检查' },
-            hospital: { name: 'xx医院' },
-            orderDate: '20221',
-        },
-    ],
+
+const setmealArrRef = ref([])
+const ordersPageResponseDtoRef = ref({})
+
+// ------------------ life cycle ------------------
+onMounted(() => {
+    getAllSetmealList()
+    getOrdersData(1)
 })
 
-// listSetmeal()
-function listSetmeal() {
-    axios
-        .post('setmeal/listSetmeal')
-        .then((response) => {
-            state.setmealArr = response.data
+function getAllSetmealList() {
+    requestSetmealList()
+        .then((data) => {
+            setmealArrRef.value = data
         })
-        .catch((error) => {
-            console.error(error)
+        .catch((err) => {
+            alert(err.message)
         })
 }
-
-// listOrders(1)
-function listOrders(pageNum) {
-    state.selectForm.pageNum = pageNum
-    state.selectForm.maxPageNum = 10
-    axios
-        .post('orders/listOrders', state.selectForm)
-        .then((response) => {
-            state.ordersPageResponseDto = response.data
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function ciReport(row) {
-    router.push({
-        name: 'OrdersContent',
-        query: { orderId: row.orderId },
+function getOrdersData(pageNum) {
+    requestOrderByPage({
+        ...dataCondition,
+        pageNum,
+        maxPageNum: MAX_PAGE_NUM,
+    }).then((data) => {
+        ordersPageResponseDtoRef.value = data
     })
-    return
-    axios
-        .post('ciReport/createReportTemplate', {
-            orderId: row.orderId,
-            smId: row.smId,
-        })
-        .then((response) => {
-            if (response.data == 1) {
-                router.push({
-                    name: '/OrdersContent',
-                    query: { orderId: row.orderId },
-                })
-            } else {
-                alert('生成报告模板失败！')
-            }
-        })
-        .catch((error) => {
-            console.error(error)
-        })
 }
+
+// ------------------ btn events ------------------
 
 function search() {
-    // console.log(selectForm)
-    // listOrders(1)
+    console.log('查询')
 }
-
-function currentChange(pageNum) {
-    listOrders(pageNum)
-}
-
 function reset() {
     if (window.confirm('确定重置？')) {
         selectForm.userId = ''
@@ -237,9 +185,39 @@ function reset() {
         selectForm.state = '1'
     }
 }
+function handleReport(row) {
+    const orderId = row.orderId
+    const smId = row.smId
+    requestReportTemplate({
+        orderId,
+        smId,
+    })
+        .then((data) => {
+            const succeed = data === 1 || data === '1'
+            if (succeed) {
+                router.push({
+                    name: 'OrdersContent',
+                    query: { orderId },
+                })
+            } else {
+                alert('生成报告模板失败！')
+            }
+        })
+        .catch((err) => {
+            alert(err.message)
+            console.log(err)
+        })
+}
+
+// ------------------ element events props ------------------
+function currentChange() {}
 </script>
 
 <style scoped>
+:deep(div.cell) {
+    text-align: center;
+}
+
 .el-header {
     background-color: #b3c0d1;
     color: var(--el-text-color-primary);

@@ -1,8 +1,8 @@
 <template>
     <el-container style="height: 100%">
         <el-header>
-            <h1>Neusoft&nbsp;&nbsp;东软体检报告管理系统</h1>
-            <p>医生：{{ doctor.realName }}</p>
+            <h1>体检报告管理系统</h1>
+            <p>医生：{{ doctorName }}</p>
         </el-header>
         <el-container>
             <el-aside width="260px">
@@ -52,7 +52,7 @@
                 <el-button
                     type="primary"
                     style="margin-top: 20px"
-                    @click="toOrdersList"
+                    @click="searchUserData"
                     >查询体检用户</el-button
                 >
             </el-aside>
@@ -60,8 +60,8 @@
                 <div class="main-box">
                     <el-collapse>
                         <el-collapse-item
-                            :title="ci.ciName"
                             v-for="(ci, ciIndex) in ciReportArr"
+                            :title="ci.ciName"
                             :key="ci.ciId"
                         >
                             <el-row style="color: #888">
@@ -176,24 +176,28 @@
                                 />
                                 <el-table-column label="操作" width="120">
                                     <template #default="scope">
-                                        <el-button
-                                            type="text"
-                                            size="small"
-                                            @click="
-                                                toUpdateOverallResult(scope.row)
-                                            "
-                                            v-if="orders.state == 1"
-                                            >更新</el-button
-                                        >
-                                        <el-button
-                                            type="text"
-                                            size="small"
-                                            @click="
-                                                removeOverallResult(scope.row)
-                                            "
-                                            v-if="orders.state == 1"
-                                            >删除</el-button
-                                        >
+                                        <div class="two-btn-box">
+                                            <el-button
+                                                size="small"
+                                                @click="
+                                                    toUpdateOverallResult(
+                                                        scope.row,
+                                                    )
+                                                "
+                                                v-if="orders.state == 1"
+                                                >更新</el-button
+                                            >
+                                            <el-button
+                                                size="small"
+                                                @click="
+                                                    removeOverallResult(
+                                                        scope.row,
+                                                    )
+                                                "
+                                                v-if="orders.state == 1"
+                                                >删除</el-button
+                                            >
+                                        </div>
                                     </template>
                                 </el-table-column>
                             </el-table>
@@ -237,7 +241,7 @@
 
                     <!-- 总检结论更新用对话框 -->
                     <el-dialog
-                        v-model="dialogVisible"
+                        v-model="isDialogVisibleRef"
                         title="总检结论项更新"
                         width="60%"
                     >
@@ -266,7 +270,8 @@
                                         @click="updateOverallResult"
                                         >更新</el-button
                                     >
-                                    <el-button @click="dialogVisible = false"
+                                    <el-button
+                                        @click="isDialogVisibleRef = false"
                                         >取消</el-button
                                     >
                                 </el-form-item>
@@ -280,257 +285,72 @@
 </template>
 
 <script setup>
-import { reactive, toRefs } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// import { getSessionStorage } from '@/utils/common'
-import axios from 'axios'
-axios.defaults.baseURL = 'http://localhost:8088/tijiancms/'
+import { getSessionStorage } from '@/utils/common'
 
 const router = useRouter()
 const route = useRoute()
-
 const orderId = route.query.orderId
+const doctorName = getSessionStorage('doctor')?.realName
 
-// const doctor = getSessionStorage('doctor')
-const doctor = { realName: 'xx医生' }
-const overallResultArr = reactive([])
+const MAN = 1
+
+const orders = reactive({
+    orderId,
+    userId: '1',
+    users: { realName: '某某', sex: MAN },
+    setmeal: { name: '男士套餐' },
+    orderDate: '2023-10-10',
+    state: 1,
+})
+
+const overallResultArr = reactive([
+    {
+        code: '123',
+        title: '标题xx',
+        content: '内容xx',
+    },
+])
 const overallResultForm = reactive({
-    title: '',
-    content: '',
+    title: '标题',
+    content: '内容',
 })
 const updateOverallResultForm = reactive({
-    orId: '',
-    title: '',
-    content: '',
+    title: '总检标题',
+    content: '总检内容',
 })
-const orders = reactive({
-    users: {},
-    setmeal: {},
-})
+const ciReportArr = [
+    {
+        ciName: 'namexxx',
+        ciId: '123',
+        cidrList: [
+            {
+                isError: 1,
+                name: '名称',
+                type: 1,
+            },
+        ],
+    },
+]
+const isDialogVisibleRef = ref(false)
 
-const ciReportArr = reactive([])
-const dialogVisible = false
+// ------------------ btn events ------------------
 
-// //初始化查询-体检预约信息
-// getOrdersById()
-// //初始化查询-体检报告检查项信息
-// listCiReport()
-// //初始化查询-总检结论项信息
-// listOverallResultByOrderId()
-
-function getOrdersById() {
-    axios
-        .post('orders/getOrdersById', {
-            orderId: state.orderId,
-        })
-        .then((response) => {
-            state.orders = response.data
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function listCiReport() {
-    axios
-        .post('ciReport/listCiReport', {
-            orderId: state.orderId,
-        })
-        .then((response) => {
-            state.ciReportArr = response.data
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function listOverallResultByOrderId() {
-    axios
-        .post('overallResult/listOverallResultByOrderId', {
-            orderId: state.orderId,
-        })
-        .then((response) => {
-            state.overallResultArr = response.data
-            for (let i = 0; i < state.overallResultArr.length; i++) {
-                state.overallResultArr[i].code = i + 1
-            }
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function toOrdersList() {
-    router.push({
-        name: 'OrdersList',
-    })
-}
-
-function cidrCheckByBlur(ciIndex, cidrIndex) {
-    //获取当前选中的检查项明细
-    let cidr = state.ciReportArr[ciIndex].cidrList[cidrIndex]
-    //判断type属性（1：数值范围验证型；2：数值相等验证型；）
-    if (cidr.type == 1) {
-        if (
-            !(cidr.value == null || cidr.value == '') &&
-            (cidr.value < cidr.minrange || cidr.value > cidr.maxrange)
-        ) {
-            cidr.isError = 1
-        } else {
-            cidr.isError = 0
-        }
-    } else if (cidr.type == 2) {
-        if (
-            !(cidr.value == null || cidr.value == '') &&
-            cidr.value != cidr.normalValue
-        ) {
-            cidr.isError = 1
-        } else {
-            cidr.isError = 0
-        }
-    }
-}
-
-function updateCiDetailedReport(ciIndex) {
-    //表单验证（1：非空；2：当type==1时验证是否为数字）
-    let cidrArr = state.ciReportArr[ciIndex].cidrList
-    for (let i = 0; i < cidrArr.length; i++) {
-        if (cidrArr[i].value == '') {
-            alert(cidrArr[i].name + '不能为空！')
-            return
-        }
-        if (
-            cidrArr[i].type == 1 &&
-            parseFloat(cidrArr[i].value).toString() == 'NaN'
-        ) {
-            alert(cidrArr[i].name + '必须为数字！')
-            return
-        }
-    }
-
-    //封装提交参数（压缩提交参数）
-    let arr = []
-    for (let i = 0; i < cidrArr.length; i++) {
-        arr.push({
-            cidrId: cidrArr[i].cidrId,
-            value: cidrArr[i].value,
-            isError: cidrArr[i].isError,
-        })
-    }
-
-    axios
-        .post('ciDetailedReport/updateCiDetailedReport', arr)
-        .then((response) => {
-            if (response.data > 0) {
-                alert('保存成功！')
-                listCiReport()
-            } else {
-                alert('保存失败！')
-            }
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function addOverallResult() {
-    if (state.overallResultForm.title == '') {
-        alert('总检结论项标题不能为空！')
-        return
-    }
-
-    state.overallResultForm.orderId = state.orderId
-    axios
-        .post('overallResult/saveOverallResult', state.overallResultForm)
-        .then((response) => {
-            if (response.data > 0) {
-                listOverallResultByOrderId()
-            } else {
-                alert('总检结论项添加失败！')
-            }
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function resetOverallResult() {
-    state.overallResultForm = {
-        title: '',
-        content: '',
-    }
-}
-
-function removeOverallResult(row) {
-    if (!confirm('确认删除此数据吗？')) {
-        return
-    }
-
-    axios
-        .post('overallResult/removeOverallResult', {
-            orId: row.orId,
-        })
-        .then((response) => {
-            if (response.data > 0) {
-                listOverallResultByOrderId()
-            } else {
-                alert('总检结论项删除失败！')
-            }
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function toUpdateOverallResult(row) {
-    state.dialogVisible = true
-    //这里不能直接赋值为row，必须使用深拷贝。否则更新数据与原数据是绑定的
-    state.updateOverallResultForm = JSON.parse(JSON.stringify(row))
-}
-
-function updateOverallResult() {
-    axios
-        .post(
-            'overallResult/updateOverallResult',
-            state.updateOverallResultForm,
-        )
-        .then((response) => {
-            if (response.data > 0) {
-                listOverallResultByOrderId()
-            } else {
-                alert('总检结论项更新失败！')
-            }
-            state.dialogVisible = false
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
-
-function updateOrdersState() {
-    if (!confirm('总检结论报告归档前，请务必确认是否所有检查项数据都正确？')) {
-        return
-    }
-
-    axios
-        .post('orders/updateOrdersState', {
-            orderId: state.orderId,
-            state: 2,
-        })
-        .then((response) => {
-            if (response.data > 0) {
-                router.push('/ordersList')
-            } else {
-                alert('总检结论报告归档失败！')
-            }
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-}
+function searchUserData() {}
+function updateOrdersState() {}
+function addOverallResult() {}
+function resetOverallResult() {}
+function updateOverallResult() {}
+function toUpdateOverallResult() {}
+function removeOverallResult() {}
 </script>
 
 <style scoped>
+.two-btn-box {
+    display: flex;
+    justify-content: space-evenly;
+}
 .el-header {
     background-color: #b3c0d1;
     color: var(--el-text-color-primary);
