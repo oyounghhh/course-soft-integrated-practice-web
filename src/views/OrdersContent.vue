@@ -184,11 +184,7 @@
                                         <div class="two-btn-box">
                                             <el-button
                                                 size="small"
-                                                @click="
-                                                    toUpdateOverallResult(
-                                                        scope.row,
-                                                    )
-                                                "
+                                                @click="showDialog(scope.row)"
                                                 v-if="orders.state == 1"
                                                 >更新</el-button
                                             >
@@ -209,20 +205,21 @@
 
                             <el-form
                                 ref="formRef"
-                                :model="overallResultForm"
+                                :model="overallResultItemTmp"
                                 style="margin-top: 20px"
                                 label-width="120px"
                                 v-if="orders.state == 1"
+                                v-show="!isDialogVisibleRef"
                             >
                                 <el-form-item label="总检结论标题">
                                     <el-input
-                                        v-model="overallResultForm.title"
+                                        v-model="overallResultItemTmp.title"
                                         placeholder="总检结论标题"
                                     ></el-input>
                                 </el-form-item>
                                 <el-form-item label="总检结论内容">
                                     <el-input
-                                        v-model="overallResultForm.content"
+                                        v-model="overallResultItemTmp.content"
                                         :rows="2"
                                         type="textarea"
                                         placeholder="总检结论内容"
@@ -236,7 +233,7 @@
                                     >
                                     <el-button
                                         type="warning"
-                                        @click="resetOverallResult"
+                                        @click="clearOverallResultInput"
                                         >清空</el-button
                                     >
                                 </el-form-item>
@@ -252,19 +249,17 @@
                     >
                         <span>
                             <el-form
-                                :model="updateOverallResultForm"
+                                :model="overallResultItemTmp"
                                 label-width="120px"
                             >
                                 <el-form-item label="总检结论标题">
                                     <el-input
-                                        v-model="updateOverallResultForm.title"
+                                        v-model="overallResultItemTmp.title"
                                     ></el-input>
                                 </el-form-item>
                                 <el-form-item label="总检结论内容">
                                     <el-input
-                                        v-model="
-                                            updateOverallResultForm.content
-                                        "
+                                        v-model="overallResultItemTmp.content"
                                         type="textarea"
                                         :rows="3"
                                     ></el-input>
@@ -276,7 +271,7 @@
                                         >更新</el-button
                                     >
                                     <el-button
-                                        @click="isDialogVisibleRef = false"
+                                        @click="cancelUpdateOverallResult"
                                         >取消</el-button
                                     >
                                 </el-form-item>
@@ -309,21 +304,21 @@ const route = useRoute()
 const orderId = route.query.orderId // 当前页面的预约用户的用户id
 const doctorName = getSessionStorage('doctor')?.realName
 
+// ------------------ 临时数据 ------------------
+// 总检结论单项
+const overallResultItemTmp = reactive({
+    title: '',
+    content: '',
+    indexWaitUpdate: -1, // 更新时，该值为对应项在 overallResultArr 中的下标
+})
+
+// 总结结论的总内容
 const overallResultArr = reactive([
-    {
-        code: '123',
-        title: '标题xx',
-        content: '内容xx',
-    },
+    { code: '0', title: '标题xx', content: '内容xx' },
+    { code: '1', title: '标题xx', content: '内容xx' },
+    { code: '2', title: '标题xx', content: '内容xx' },
 ])
-const overallResultForm = reactive({
-    title: '标题',
-    content: '内容',
-})
-const updateOverallResultForm = reactive({
-    title: '总检标题',
-    content: '总检内容',
-})
+
 const ciReportArrRef = ref([])
 const isDialogVisibleRef = ref(false)
 
@@ -409,6 +404,8 @@ function updateCiDetailedReport(ciIndex) {
         })
 }
 
+// ------------------ 总检框按钮事件 ------------------
+
 /**
  * 将总检结论的内容归档
  */
@@ -430,12 +427,67 @@ function updateOrdersState() {
         })
 }
 
-function addOverallResult() {}
-function resetOverallResult() {}
-function updateOverallResult() {}
-function toUpdateOverallResult() {}
-function removeOverallResult() {}
-
+/**
+ * 添加一条总检结论单项
+ */
+function addOverallResult() {
+    overallResultArr.push({
+        code: (Math.random() * 100).toFixed(),
+        title: overallResultItemTmp.title,
+        content: overallResultItemTmp.content,
+    })
+    clearOverallResultInput()
+}
+/**
+ * 清空总检结论单项中的内容
+ */
+function clearOverallResultInput() {
+    overallResultItemTmp.title = ''
+    overallResultItemTmp.content = ''
+    overallResultItemTmp.indexWaitUpdate = -1
+    isDialogVisibleRef.value = false
+}
+/**
+ * 删除某项总检结论
+ * @param {{code: string}} row
+ */
+function removeOverallResult(row) {
+    const code = row.code
+    const index = overallResultArr.findIndex((ele) => ele.code === code)
+    if (index !== -1) {
+        overallResultArr.splice(index, 1)
+    }
+}
+/**
+ * 显示更新框，用于更新指定某项总检结论
+ */
+function showDialog(row) {
+    const code = row.code
+    const index = overallResultArr.findIndex((ele) => ele.code === code)
+    if (index !== -1) {
+        overallResultItemTmp.title = overallResultArr[index].title
+        overallResultItemTmp.content = overallResultArr[index].content
+        overallResultItemTmp.indexWaitUpdate = index
+        isDialogVisibleRef.value = true
+    } else {
+        alert('出错了，找不到该总结单项')
+    }
+}
+/**
+ * 更新某项总检结论
+ */
+function updateOverallResult() {
+    const i = overallResultItemTmp.indexWaitUpdate
+    overallResultArr[i].title = overallResultItemTmp.title
+    overallResultArr[i].content = overallResultItemTmp.content
+    clearOverallResultInput()
+}
+/**
+ * 取消更新某项总检结论
+ */
+function cancelUpdateOverallResult() {
+    clearOverallResultInput()
+}
 // ------------------ element-plus events ------------------
 function cidrCheckByBlur() {}
 </script>
