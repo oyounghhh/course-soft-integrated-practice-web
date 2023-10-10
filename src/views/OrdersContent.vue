@@ -364,6 +364,10 @@ function queryOrderUserData() {
     })
 }
 
+/**
+ * 更新某个类型的指标项的值，保存成功后需要更新指标项 ciReportArrRef
+ * @param {Number} ciIndex
+ */
 function updateCiDetailedReport(ciIndex) {
     //表单验证（1：非空；2：当type==1时验证是否为数字）
     let cidrArr = ciReportArrRef.value[ciIndex].cidrList
