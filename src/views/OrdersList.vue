@@ -5,6 +5,7 @@
             <p>医生：{{ doctorName }}</p>
         </el-header>
         <el-container>
+            <!-- 左侧的查询框 -->
             <el-aside width="260px">
                 <h4>体检用户查询</h4>
                 <el-form
@@ -70,6 +71,7 @@
                 </el-form>
             </el-aside>
             <el-main>
+                <!-- 右侧的查询结果表单 -->
                 <el-table
                     :data="ordersPageResponseDtoRef?.list"
                     style="width: 100%"
