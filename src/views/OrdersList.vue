@@ -123,7 +123,7 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { getSessionStorage } from '@/utils/common'
 import requestReportTemplate from '@/requests/requestReportTemplate'
 import requestSetmealList from '@/requests/requestSetmealList'
@@ -131,10 +131,11 @@ import requestOrderByPage from '@/requests/requestOrderByPage'
 
 const MAX_PAGE_NUM = 10
 const router = useRouter()
+const route = useRoute()
 const doctorName = getSessionStorage('doctor')?.realName
 
 const dataCondition = reactive({
-    userId: '',
+    userId: route.query.userId || '',
     realName: '',
     sex: '',
     smId: '',

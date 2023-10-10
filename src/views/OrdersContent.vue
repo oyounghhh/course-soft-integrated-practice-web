@@ -4,7 +4,9 @@
             <h1>体检报告管理系统</h1>
             <p>医生：{{ doctorName }}</p>
         </el-header>
-        <el-container>
+
+        <el-container v-if="isLoaded">
+            <!-- 侧边栏：预约用户的个人信息 -->
             <el-aside width="260px">
                 <el-descriptions
                     class="margin-top"
@@ -52,10 +54,11 @@
                 <el-button
                     type="primary"
                     style="margin-top: 20px"
-                    @click="searchUserData"
+                    @click="queryOrderUserData"
                     >查询体检用户</el-button
                 >
             </el-aside>
+
             <el-main>
                 <div class="main-box">
                     <el-collapse>
@@ -285,25 +288,21 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onBeforeMount, onMounted, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSessionStorage } from '@/utils/common'
 
+import requestOrderUserData from '@/requests/requestOrderUserData'
+
+// 异步数据未请求完成时，不进行组件的渲染
+const isLoaded = ref(false)
+// 体检预约用户的个人预约信息
+const orders = ref({})
+
 const router = useRouter()
 const route = useRoute()
-const orderId = route.query.orderId
+const orderId = route.query.orderId // 当前页面的预约用户的用户id
 const doctorName = getSessionStorage('doctor')?.realName
-
-const MAN = 1
-
-const orders = reactive({
-    orderId,
-    userId: '1',
-    users: { realName: '某某', sex: MAN },
-    setmeal: { name: '男士套餐' },
-    orderDate: '2023-10-10',
-    state: 1,
-})
 
 const overallResultArr = reactive([
     {
@@ -335,15 +334,44 @@ const ciReportArr = [
 ]
 const isDialogVisibleRef = ref(false)
 
+// ------------------ life cycle ------------------
+onBeforeMount(async () => {
+    await getOrdersUserData()
+    isLoaded.value = true
+})
+
+// ------------------ fetch data ------------------
+async function getOrdersUserData() {
+    try {
+        orders.value = await requestOrderUserData(orderId)
+    } catch (error) {
+        alert(err.message)
+    }
+}
+
 // ------------------ btn events ------------------
 
-function searchUserData() {}
+/**
+ * 查询体检用户的信息 --> 进入 OrderList 页面
+ */
+function queryOrderUserData() {
+    router.push({
+        name: 'OrdersList',
+        query: {
+            userId: orders.userId,
+        },
+    })
+}
 function updateOrdersState() {}
 function addOverallResult() {}
 function resetOverallResult() {}
 function updateOverallResult() {}
 function toUpdateOverallResult() {}
 function removeOverallResult() {}
+function updateCiDetailedReport() {}
+
+// ------------------ element-plus events ------------------
+function cidrCheckByBlur() {}
 </script>
 
 <style scoped>

@@ -6,6 +6,5 @@ import { post } from '@/requests'
  * @returns
  */
 export default function requestOrderByPage(data) {
-    console.log('oerders')
     return post('/orders/listOrders', data)
 }
