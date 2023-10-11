@@ -150,7 +150,7 @@ const ordersPageResponseDtoRef = ref({})
 
 // ------------------ life cycle ------------------
 onMounted(() => {
-    // getAllSetmealList()
+    getAllSetmealList()
     // getOrdersData(1)
 })
 
