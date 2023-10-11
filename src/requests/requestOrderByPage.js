@@ -3,7 +3,7 @@ import { post } from '@/requests'
 /**
  * 分页查询某类用户体检预约列表
  * @param {*} data
- * @returns {OrdersPageResponseDto}
+ * @returns {Promise<OrdersPageResponseDto>}
  */
 function listOrders(data) {
     return post('/orders/listOrders', data)

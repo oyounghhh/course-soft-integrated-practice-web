@@ -151,7 +151,7 @@ const ordersPageResponseDtoRef = ref({})
 // ------------------ life cycle ------------------
 onMounted(() => {
     getAllSetmealList()
-    // getOrdersData(1)
+    getOrdersDto(1)
 })
 
 function getAllSetmealList() {
@@ -163,7 +163,7 @@ function getAllSetmealList() {
             alert(err.message)
         })
 }
-function getOrdersData(pageNum) {
+function getOrdersDto(pageNum) {
     requestOrderByPage({
         ...dataCondition,
         pageNum,
