@@ -14,8 +14,8 @@ function listOrders(data) {
  * @param {*} htId
  * @returns {Promise<Hospital>}
  */
-function hospitalInfo(htId) {
-    return post('/hospital/getHospitalById', { htId })
+function hospitalInfo(hpId) {
+    return post('/hospital/getHospitalById', { hpId })
 }
 
 /**
@@ -62,7 +62,7 @@ export default async function requestOrderByPage(data) {
         }
         obj.users = {
             realName: result[index + 2 * listLen].value.realName,
-            sex: result[index + 2 * listLen].value.sex,
+            sex: result[index + 2 * listLen].value.sex === 1 ? '男' : '女',
         }
     })
 

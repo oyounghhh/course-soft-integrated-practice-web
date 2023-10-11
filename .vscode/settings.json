@@ -1,4 +1,6 @@
 {
     "editor.formatOnSave": true,
-    "cSpell.words": ["axios"]
+    "cSpell.words": ["axios"],
+    "files.autoSave": "off",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
