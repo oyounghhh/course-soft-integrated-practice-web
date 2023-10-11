@@ -305,21 +305,6 @@ const route = useRoute()
 const orderId = route.query.orderId // 当前页面的预约用户的用户id
 const doctorName = getSessionStorage('doctor')?.realName
 
-// ------------------ 临时数据 ------------------
-// 总检结论单项
-const overallResultItemTmp = reactive({
-    title: '',
-    content: '',
-    indexWaitUpdate: -1, // 更新时，该值为对应项在 overallResultArr 中的下标
-})
-
-// 总结结论的总内容
-const overallResultArr = reactive([
-    { code: '0', title: '标题xx', content: '内容xx' },
-    { code: '1', title: '标题xx', content: '内容xx' },
-    { code: '2', title: '标题xx', content: '内容xx' },
-])
-
 const ciReportArrRef = ref([])
 const isDialogVisibleRef = ref(false)
 
@@ -407,10 +392,52 @@ function updateCiDetailedReport(ciIndex) {
         })
 }
 
-// ------------------ 总检框按钮事件 ------------------
+// ------------------ element-plus events ------------------
+function cidrCheckByBlur(ciIndex, cidrIndex) {
+    //获取当前选中的检查项明细
+    let cidr = ciReportArrRef.value[ciIndex].cidrList[cidrIndex]
+    //判断type属性（1：数值范围验证型；2：数值相等验证型；）
+    if (cidr.type == 1) {
+        if (
+            !(cidr.value == null || cidr.value == '') &&
+            (cidr.value < cidr.minrange || cidr.value > cidr.maxrange)
+        ) {
+            cidr.isError = 1
+        } else {
+            cidr.isError = 0
+        }
+    } else if (cidr.type == 2) {
+        if (
+            !(cidr.value == null || cidr.value == '') &&
+            cidr.value != cidr.normalValue
+        ) {
+            cidr.isError = 1
+        } else {
+            cidr.isError = 0
+        }
+    }
+}
+
+// ------------------  ------------------
+// ------------------ 总检模块 ------------------
+// ------------------  ------------------
+
+// 总检结论单项
+const overallResultItemTmp = reactive({
+    title: '',
+    content: '',
+    indexWaitUpdate: -1, // 更新时，该值为对应项在 overallResultArr 中的下标
+})
+
+// 总结结论的总内容
+const overallResultArr = reactive([
+    { code: '0', title: '标题xx', content: '内容xx' },
+    { code: '1', title: '标题xx', content: '内容xx' },
+    { code: '2', title: '标题xx', content: '内容xx' },
+])
 
 /**
- * 将总检结论的内容归档
+ * 将总检结论的内容归档（发送请求）
  */
 function updateOrdersState() {
     if (!confirm('总检结论报告归档前，请务必确认是否所有检查项数据都正确？')) {
@@ -490,31 +517,6 @@ function updateOverallResult() {
  */
 function cancelUpdateOverallResult() {
     clearOverallResultInput()
-}
-// ------------------ element-plus events ------------------
-function cidrCheckByBlur(ciIndex, cidrIndex) {
-    //获取当前选中的检查项明细
-    let cidr = ciReportArrRef.value[ciIndex].cidrList[cidrIndex]
-    //判断type属性（1：数值范围验证型；2：数值相等验证型；）
-    if (cidr.type == 1) {
-        if (
-            !(cidr.value == null || cidr.value == '') &&
-            (cidr.value < cidr.minrange || cidr.value > cidr.maxrange)
-        ) {
-            cidr.isError = 1
-        } else {
-            cidr.isError = 0
-        }
-    } else if (cidr.type == 2) {
-        if (
-            !(cidr.value == null || cidr.value == '') &&
-            cidr.value != cidr.normalValue
-        ) {
-            cidr.isError = 1
-        } else {
-            cidr.isError = 0
-        }
-    }
 }
 </script>
 
