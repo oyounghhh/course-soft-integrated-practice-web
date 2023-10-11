@@ -70,3 +70,25 @@ interface SetmealDetailed {
         remarks: String
     }
 }
+
+interface CiReport {
+    cirId: number
+    ciId: number
+    ciName: string
+    orderId: number
+    cidrList: Array<CiDetailedReport>
+}
+interface CiDetailedReport {
+    cidrId: number
+    name: string
+    unit: string
+    minrange: number
+    maxrange: number
+    normalValue: string
+    normalValueString: string
+    type: number
+    value: string
+    isError: number
+    ciId: number
+    orderId: number
+}

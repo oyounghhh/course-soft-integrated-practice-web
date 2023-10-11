@@ -327,8 +327,8 @@ const isDialogVisibleRef = ref(false)
 onBeforeMount(async () => {
     await getOrdersById()
     isAsideShow.value = true
-    // await getUserCiReports()
-    // isLoaded.value = true
+    await getCiReportArr()
+    isMainShow.value = true
 })
 
 // ------------------ fetch data ------------------
@@ -340,9 +340,10 @@ async function getOrdersById() {
     }
 }
 
-async function getUserCiReports() {
+async function getCiReportArr() {
     try {
-        ciReportArrRef.value = await requestCiReports(orderId)
+        const ciReportArr = await requestCiReports(orderId)
+        ciReportArrRef.value = ciReportArr
     } catch (error) {
         alert(err.message)
     }
@@ -396,7 +397,7 @@ function updateCiDetailedReport(ciIndex) {
         .then((data) => {
             if (data > 0) {
                 alert('保存成功！')
-                getUserCiReports()
+                getCiReportArr()
             } else {
                 alert('保存失败！')
             }
