@@ -1,3 +1,9 @@
+interface OrdersMore extends Orders {
+    users: Users
+    hospital: Hospital
+    setmeal: Setmeal
+}
+
 interface Orders {
     orderDate: String
     userId: String

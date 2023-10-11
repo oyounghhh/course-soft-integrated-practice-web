@@ -5,9 +5,9 @@
             <p>医生：{{ doctorName }}</p>
         </el-header>
 
-        <el-container v-if="isLoaded">
+        <el-container>
             <!-- 侧边栏：预约用户的个人信息 -->
-            <el-aside width="260px">
+            <el-aside width="260px" v-if="isAsideShow">
                 <el-descriptions
                     class="margin-top"
                     title="预约客户信息"
@@ -59,7 +59,7 @@
                 >
             </el-aside>
 
-            <el-main>
+            <el-main v-if="isMainShow">
                 <div class="main-box">
                     <!-- 折叠框，显示各项身体标准的体检值 -->
                     <el-collapse>
@@ -295,7 +295,8 @@ import requestUpdateCiDetailReport from '@/requests/requestUpdateCiDetailReport'
 import requestUpdateCiReportResult from '@/requests/requestUpdateCiReportResult'
 
 // 异步数据未请求完成时，不进行组件的渲染
-const isLoaded = ref(false)
+const isMainShow = ref(false)
+const isAsideShow = ref(false)
 // 体检预约用户的个人预约信息
 const orders = ref({})
 
@@ -324,16 +325,17 @@ const isDialogVisibleRef = ref(false)
 
 // ------------------ life cycle ------------------
 onBeforeMount(async () => {
-    await getOrdersUserData()
-    await getUserCiReports()
+    await getOrdersById()
+    isAsideShow.value = true
+    // await getUserCiReports()
     // isLoaded.value = true
 })
 
 // ------------------ fetch data ------------------
-async function getOrdersUserData() {
+async function getOrdersById() {
     try {
-        orders.value = await requestOrderUserData(orderId)
-    } catch (error) {
+        orders.value = await requestOrderUserData({ orderId })
+    } catch (err) {
         alert(err.message)
     }
 }
