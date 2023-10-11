@@ -45,9 +45,8 @@ function login() {
 
     requestLogin(loginForm)
         .then((data) => {
-            const doctorName = data
-            if (data !== '') {
-                setSessionStorage('doctor', { realName: doctorName })
+            if (data) {
+                setSessionStorage('doctor', data)
                 router.push({ name: 'OrdersList' })
             } else {
                 alert('不存在该医生')

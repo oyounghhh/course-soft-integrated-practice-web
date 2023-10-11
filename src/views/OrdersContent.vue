@@ -326,7 +326,7 @@ const isDialogVisibleRef = ref(false)
 onBeforeMount(async () => {
     await getOrdersUserData()
     await getUserCiReports()
-    isLoaded.value = true
+    // isLoaded.value = true
 })
 
 // ------------------ fetch data ------------------
